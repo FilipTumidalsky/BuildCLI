@@ -51,7 +51,7 @@ class ProjectUpdaterTest {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
-
+		
 	}
 
 	@Test
