@@ -26,10 +26,12 @@ class ConfigContextLoaderTest {
         origUserDir = System.getProperty("user.dir");
         origUserHome = System.getProperty("user.home");
 
+        // Isolate working dir and home dir into @TempDir
         System.setProperty("user.dir", tmp.toString());
         System.setProperty("user.home", tmp.resolve("home").toString());
         Files.createDirectories(Path.of(System.getProperty("user.home")));
 
+        // Reset static caches inside ConfigContextLoader between tests
         resetStaticCache();
     }
 
@@ -41,17 +43,16 @@ class ConfigContextLoaderTest {
     }
 
     private static void resetStaticCache() throws Exception {
-        try {
-            Field local = ConfigContextLoader.class.getDeclaredField("localConfig");
-            Field global = ConfigContextLoader.class.getDeclaredField("globalConfig");
-            Field merged = ConfigContextLoader.class.getDeclaredField("mergedConfig");
-            local.setAccessible(true);
-            global.setAccessible(true);
-            merged.setAccessible(true);
-            local.set(null, null);
-            global.set(null, null);
-            merged.set(null, null);
-        } catch (NoSuchFieldException ignored) {}
+        // ConfigContextLoader keeps static BuildCLIConfig singletons; clear them via reflection
+        Field local = ConfigContextLoader.class.getDeclaredField("localConfig");
+        Field global = ConfigContextLoader.class.getDeclaredField("globalConfig");
+        Field merged = ConfigContextLoader.class.getDeclaredField("mergedConfig");
+        local.setAccessible(true);
+        global.setAccessible(true);
+        merged.setAccessible(true);
+        local.set(null, null);
+        global.set(null, null);
+        merged.set(null, null);
     }
 
     private static void writeProperties(Path file, String content) throws Exception {
@@ -62,10 +63,11 @@ class ConfigContextLoaderTest {
     }
 
     private static Path localConfig(Path base) {
-        return base.resolve("buildcli.properties");
+        return base.resolve("buildcli.properties"); // ConfigDefaultConstants.BUILD_CLI_CONFIG_FILE_NAME
     }
 
     private static Path globalConfig(Path home) {
+        // Mirrors typical ~/.buildcli/config/buildcli.properties
         return home.resolve(".buildcli").resolve("config").resolve("buildcli.properties");
     }
 
@@ -116,5 +118,33 @@ class ConfigContextLoaderTest {
         assertEquals("L", all.getProperty("same").orElse(null), "local should override global");
         assertEquals("x", all.getProperty("onlyGlobal").orElse(null));
         assertEquals("y", all.getProperty("onlyLocal").orElse(null));
+    }
+
+    @Test
+    @DisplayName("saveLocalConfig() writes to working directory as local")
+    void saveLocalWritesFile() throws Exception {
+        BuildCLIConfig cfg = BuildCLIConfig.empty();
+        cfg.addOrSetProperty("abc", "123");
+        ConfigContextLoader.saveLocalConfig(cfg);
+
+        Path file = localConfig(tmp);
+        assertTrue(Files.exists(file));
+        BuildCLIConfig reloaded = ConfigContextLoader.getLocalConfig();
+        assertEquals("123", reloaded.getProperty("abc").orElse(null));
+        assertTrue(reloaded.isLocal());
+    }
+
+    @Test
+    @DisplayName("saveGlobalConfig() writes to user.home as global")
+    void saveGlobalWritesFile() throws Exception {
+        BuildCLIConfig cfg = BuildCLIConfig.empty();
+        cfg.addOrSetProperty("abc", "777");
+        ConfigContextLoader.saveGlobalConfig(cfg);
+
+        Path file = globalConfig(Path.of(System.getProperty("user.home")));
+        assertTrue(Files.exists(file));
+        BuildCLIConfig reloaded = ConfigContextLoader.getGlobalConfig();
+        assertEquals("777", reloaded.getProperty("abc").orElse(null));
+        assertFalse(reloaded.isLocal());
     }
 }
