@@ -52,9 +52,10 @@ class ConfigContextLoaderTest {
         try {
             Path localPath = Path.of(BUILD_CLI_CONFIG_FILE_NAME).toAbsolutePath();
             Files.deleteIfExists(localPath);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // exception
+        }
     }
-
     /**
      * Clears possible static cache fields inside ConfigContextLoader.
      * This ensures that each test starts with a fresh state.
