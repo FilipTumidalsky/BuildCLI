@@ -21,7 +21,7 @@ import static dev.buildcli.core.constants.ConfigDefaultConstants.BUILD_CLI_CONFI
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for {@link ConfigsOperationsUtils}.
+ * Unit tests for ConfigsOperationsUtils.
  */
 class ConfigsOperationsUtilsTest {
 
@@ -32,8 +32,8 @@ class ConfigsOperationsUtilsTest {
 
     @BeforeEach
     void setUp() {
-        // Presmerujeme working directory na tempDir,
-        // aby sa lokálny config súbor vytváral len v dočasnom adresári.
+        // Redirect working directory to tempDir
+        // so the local config file is created only in the temporary folder.
         originalUserDir = System.getProperty("user.dir");
         System.setProperty("user.dir", tempDir.toString());
     }
@@ -45,7 +45,7 @@ class ConfigsOperationsUtilsTest {
 
     @Test
     void getLocal_shouldReturnEmpty_whenLocalConfigFileDoesNotExist() {
-        // GIVEN - v tempDir neexistuje súbor s názvom BUILD_CLI_CONFIG_FILE_NAME
+        // GIVEN - the file BUILD_CLI_CONFIG_FILE_NAME does not exist in tempDir
 
         // WHEN
         Optional<BuildCLIConfig> result = ConfigsOperationsUtils.getLocal();
@@ -62,7 +62,7 @@ class ConfigsOperationsUtilsTest {
 
         BuildCLIConfig mockConfig = Mockito.mock(BuildCLIConfig.class);
 
-        // Mockneme statickú metódu BuildCLIConfig.from(File)
+        // Mock the static method BuildCLIConfig.from(File)
         try (MockedStatic<BuildCLIConfig> mockedStatic =
                      Mockito.mockStatic(BuildCLIConfig.class)) {
 
@@ -75,7 +75,7 @@ class ConfigsOperationsUtilsTest {
 
             // THEN
             assertTrue(result.isPresent(), "Config should be present when file exists");
-            assertSame(mockConfig, result.get(), "Should return same instance as created by BuildCLIConfig.from()");
+            assertSame(mockConfig, result.get(), "Should return the same instance created by BuildCLIConfig.from()");
             Mockito.verify(mockConfig).setLocal(true);
         }
     }
@@ -127,20 +127,21 @@ class ConfigsOperationsUtilsTest {
         // THEN
         assertTrue(localFile.exists(), "Local config file should be created by set()");
         String content = Files.readString(localFile.toPath());
-        // keďže properties je prázdny zoznam, obsah má byť prázdny reťazec alebo len newline
+
+        // Since properties is an empty set, the content should be an empty string or just newlines
         assertTrue(content.isEmpty() || content.matches("\\R+"),
                 "Content should be empty (or only newlines) when there are no properties");
     }
 
     @Test
-    void set_shouldWrapIOExceptionIntoConfigException_whenWriteFails() throws IOException {
+    void set_shouldWrapIOExceptionIntoConfigException_whenWriteFails() {
         // GIVEN
         BuildCLIConfig mockConfig = Mockito.mock(BuildCLIConfig.class);
         Mockito.when(mockConfig.isLocal()).thenReturn(true);
         Mockito.when(mockConfig.getProperties()).thenReturn(Collections.emptySet());
 
-        // Vytvoríme DIRECTORY s názvom, ktorý má mať config súbor
-        // -> Files.writeString() na tento path hodí IOException.
+        // Create a DIRECTORY with the same name as the config file
+        // -> Files.writeString() will throw IOException for this path.
         File asDirectory = new File(BUILD_CLI_CONFIG_FILE_NAME);
         assertTrue(asDirectory.mkdir(), "Precondition: directory with config file name should exist");
 
