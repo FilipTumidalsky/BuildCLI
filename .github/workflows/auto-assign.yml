@@ -91,7 +91,7 @@ jobs:
 
                   if (assignedUser === commenter) {
                     console.log(`⚠️ ${commenter} is already assigned.`);
-                    
+            
                     await github.rest.issues.createComment({
                       owner: repoOwner,
                       repo: repoName,
