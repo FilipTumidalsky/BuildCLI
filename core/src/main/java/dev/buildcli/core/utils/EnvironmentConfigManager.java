@@ -49,6 +49,6 @@ public class EnvironmentConfigManager {
     }
 
     public static void setConfigPathForTest(Path configFile) {
-
+        // without this -> EnvironmentConfigManagerTest.java is not working -> /redo needed
     }
 }
