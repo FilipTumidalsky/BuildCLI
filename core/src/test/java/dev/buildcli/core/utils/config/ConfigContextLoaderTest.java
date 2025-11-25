@@ -51,9 +51,7 @@ class ConfigContextLoaderTest {
             local.set(null, null);
             global.set(null, null);
             merged.set(null, null);
-        } catch (NoSuchFieldException ignored) {
-            // fields nemusia existovať — nevadí
-        }
+        } catch (NoSuchFieldException ignored) {}
     }
 
     private static void writeProperties(Path file, String content) throws Exception {
@@ -105,5 +103,18 @@ class ConfigContextLoaderTest {
         BuildCLIConfig all = ConfigContextLoader.getAllConfigs();
         assertEquals("global", all.getProperty("g1").orElse(null));
         assertEquals("G", all.getProperty("same").orElse(null));
+    }
+
+    @Test
+    @DisplayName("Local values override global values on merge")
+    void localOverridesGlobal() throws Exception {
+        Path home = Path.of(System.getProperty("user.home"));
+        writeProperties(globalConfig(home), "same=G\nonlyGlobal=x\n");
+        writeProperties(localConfig(tmp), "same=L\nonlyLocal=y\n");
+
+        BuildCLIConfig all = ConfigContextLoader.getAllConfigs();
+        assertEquals("L", all.getProperty("same").orElse(null), "local should override global");
+        assertEquals("x", all.getProperty("onlyGlobal").orElse(null));
+        assertEquals("y", all.getProperty("onlyLocal").orElse(null));
     }
 }
