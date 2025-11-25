@@ -21,7 +21,7 @@ import static dev.buildcli.core.constants.ConfigDefaultConstants.BUILD_CLI_CONFI
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for ConfigsOperationsUtils.
+ * Unit tests for {@link ConfigsOperationsUtils}.
  */
 class ConfigsOperationsUtilsTest {
 
@@ -62,7 +62,7 @@ class ConfigsOperationsUtilsTest {
 
         BuildCLIConfig mockConfig = Mockito.mock(BuildCLIConfig.class);
 
-        // Mock the static method BuildCLIConfig.from(File)
+        // Mocking + stubbing a static method.
         try (MockedStatic<BuildCLIConfig> mockedStatic =
                      Mockito.mockStatic(BuildCLIConfig.class)) {
 
